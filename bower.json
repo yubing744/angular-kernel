@@ -1,0 +1,11 @@
+{
+  "name": "angularjs",
+  "license": "MIT",
+  "devDependencies": {
+    "closure-compiler": "http://oj1fqm2fl.bkt.clouddn.com/compiler-20140814.zip",
+    "ng-closure-runner": "http://oj1fqm2fl.bkt.clouddn.com/ng-closure-runner.zip"
+  }
+}
+
+
+
