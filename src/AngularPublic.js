@@ -59,9 +59,12 @@ function publishExternalAPI(angular) {
     'getTestability': getTestability,
     'reloadWithDebugInfo': reloadWithDebugInfo,
     '$$minErr': minErr,
-    '$$csp': csp,
     '$$encodeUriSegment': encodeUriSegment,
     '$$encodeUriQuery': encodeUriQuery,
     '$$stringify': stringify
   });
 }
+
+angularModule = setupModuleLoader(window);
+
+

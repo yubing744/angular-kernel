@@ -61,7 +61,7 @@ module.exports = function(grunt) {
   // compute version related info for this build
   var NG_VERSION = versionInfo.currentVersion;
   NG_VERSION.cdn = versionInfo.cdnVersion;
-  var dist = 'angular-' + NG_VERSION.full;
+  var dist = 'angular-core-' + NG_VERSION.full;
 
   if (versionInfo.cdnVersion == null) {
     throw new Error('Unable to read CDN version, are you offline or has the CDN not been properly pushed?\n' +
@@ -129,14 +129,12 @@ module.exports = function(grunt) {
 
 
     tests: {
-      docs: 'karma-docs.conf.js',
-      modules: 'karma-modules.conf.js'
+      core: 'karma-core.conf.js'
     },
 
 
     autotest: {
-      modules: 'karma-modules.conf.js',
-      docs: 'karma-docs.conf.js'
+      core: 'karma-core.conf.js'
     },
 
 
@@ -258,10 +256,8 @@ module.exports = function(grunt) {
   });
 
   //alias tasks
-  grunt.registerTask('test', 'Run unit, docs and e2e tests with Karma', ['eslint', 'package', 'test:unit', 'test:promises-aplus', 'tests:docs', 'test:protractor']);
-  grunt.registerTask('test:modules', 'Run the Karma module tests with Karma', ['build', 'tests:modules']);
-  grunt.registerTask('test:docs', 'Run the doc-page tests with Karma', ['package', 'tests:docs']);
-  grunt.registerTask('test:unit', 'Run unit, jQuery and Karma module tests with Karma', ['test:jqlite', 'test:jquery', 'test:jquery-2.2', 'test:jquery-2.1', 'test:modules']);
+  grunt.registerTask('test', 'Run unit, docs and e2e tests with Karma', ['eslint', 'package', 'test:unit', 'test:protractor']);
+  grunt.registerTask('test:unit', 'Run unit, jQuery and Karma module tests with Karma', ['tests:core']);
   grunt.registerTask('test:protractor', 'Run the end to end tests with Protractor and keep a test server running in the background', ['webdriver', 'connect:testserver', 'protractor:normal']);
   grunt.registerTask('test:travis-protractor', 'Run the end to end tests with Protractor for Travis CI builds', ['connect:testserver', 'protractor:travis']);
   grunt.registerTask('test:ci-protractor', 'Run the end to end tests with Protractor for Jenkins CI builds', ['webdriver', 'connect:testserver', 'protractor:jenkins']);

@@ -259,44 +259,6 @@ function setupModuleLoader(window) {
 
           /**
            * @ngdoc method
-           * @name angular.Module#controller
-           * @module ng
-           * @param {string|Object} name Controller name, or an object map of controllers where the
-           *    keys are the names and the values are the constructors.
-           * @param {Function} constructor Controller constructor function.
-           * @description
-           * See {@link ng.$controllerProvider#register $controllerProvider.register()}.
-           */
-          controller: invokeLaterAndSetModuleName('$controllerProvider', 'register'),
-
-          /**
-           * @ngdoc method
-           * @name angular.Module#directive
-           * @module ng
-           * @param {string|Object} name Directive name, or an object map of directives where the
-           *    keys are the names and the values are the factories.
-           * @param {Function} directiveFactory Factory function for creating new instance of
-           * directives.
-           * @description
-           * See {@link ng.$compileProvider#directive $compileProvider.directive()}.
-           */
-          directive: invokeLaterAndSetModuleName('$compileProvider', 'directive'),
-
-          /**
-           * @ngdoc method
-           * @name angular.Module#component
-           * @module ng
-           * @param {string} name Name of the component in camel-case (i.e. myComp which will match as my-comp)
-           * @param {Object} options Component definition object (a simplified
-           *    {@link ng.$compile#directive-definition-object directive definition object})
-           *
-           * @description
-           * See {@link ng.$compileProvider#component $compileProvider.component()}.
-           */
-          component: invokeLaterAndSetModuleName('$compileProvider', 'component'),
-
-          /**
-           * @ngdoc method
            * @name angular.Module#config
            * @module ng
            * @param {Function} configFn Execute this function on module load. Useful for service

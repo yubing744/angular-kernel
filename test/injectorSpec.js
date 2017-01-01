@@ -6,14 +6,12 @@ describe('injector', function() {
   var providers;
   var injector;
   var providerInjector;
-  var controllerProvider;
 
-  beforeEach(module(function($provide, $injector, $controllerProvider) {
+  beforeEach(module(function($provide, $injector) {
     providers = function(name, factory, annotations) {
       $provide.factory(name, extend(factory, annotations || {}));
     };
     providerInjector = $injector;
-    controllerProvider = $controllerProvider;
   }));
   beforeEach(inject(function($injector) {
     injector = $injector;
@@ -89,16 +87,6 @@ describe('injector', function() {
       injector.get('idontexist', 'callerName');
     }).toThrowMinErr('$injector', 'unpr', 'Unknown provider: idontexistProvider <- idontexist <- callerName');
   });
-
-
-  it('should provide the caller name for controllers', function() {
-    controllerProvider.register('myCtrl', function(idontexist) {});
-    var $controller = injector.get('$controller');
-    expect(function() {
-      $controller('myCtrl', {$scope: {}});
-    }).toThrowMinErr('$injector', 'unpr', 'Unknown provider: idontexistProvider <- idontexist <- myCtrl');
-  });
-
 
   it('should not corrupt the cache when an object fails to get instantiated', function() {
     expect(function() {
@@ -770,7 +758,6 @@ describe('injector', function() {
           }]);
 
           expect(injector.get('key')).toBe('value');
-          expect(injector.get('$http')).not.toBeUndefined();
         });
       });
     });
@@ -1074,15 +1061,6 @@ describe('strict-di injector', function() {
     it('should not throw when calling mock.module() with "magic" annotations', function() {
       expect(function() {
         module(function($provide, $httpProvider, $compileProvider) {
-          // Don't throw!
-        });
-      }).not.toThrow();
-    });
-
-
-    it('should not throw when calling mock.inject() with "magic" annotations', function() {
-      expect(function() {
-        inject(function($rootScope, $compile, $http) {
           // Don't throw!
         });
       }).not.toThrow();

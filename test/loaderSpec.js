@@ -38,9 +38,6 @@ describe('module loader', function() {
       service('a', 'aa').
       value('k', 'v').
       filter('f', 'ff').
-      directive('d', 'dd').
-      component('c', 'cc').
-      controller('ctrl', 'ccc').
       config('init2').
       constant('abc', 123).
       run('runBlock')).toBe(myModule);
@@ -52,10 +49,7 @@ describe('module loader', function() {
       ['$provide', 'factory', jasmine.objectContaining(['fk', 'fv'])],
       ['$provide', 'service', jasmine.objectContaining(['a', 'aa'])],
       ['$provide', 'value', jasmine.objectContaining(['k', 'v'])],
-      ['$filterProvider', 'register', jasmine.objectContaining(['f', 'ff'])],
-      ['$compileProvider', 'directive', jasmine.objectContaining(['d', 'dd'])],
-      ['$compileProvider', 'component', jasmine.objectContaining(['c', 'cc'])],
-      ['$controllerProvider', 'register', jasmine.objectContaining(['ctrl', 'ccc'])]
+      ['$filterProvider', 'register', jasmine.objectContaining(['f', 'ff'])]
     ]);
     expect(myModule._configBlocks).toEqual([
       ['$injector', 'invoke', jasmine.objectContaining(['config'])],

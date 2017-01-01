@@ -4,6 +4,7 @@
 // not smart enough to understand the `typeof !== 'undefined'` guards.
 /* globals Blob, Uint8ClampedArray, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array,
 Float32Array, Float64Array,  */
+function dealoc(obj) {}
 
 describe('angular', function() {
   var element, document;
@@ -405,15 +406,6 @@ describe('angular', function() {
       expect(copy([{key:null}])).toEqual([{key:null}]);
     });
 
-    it('should throw an exception if a Scope is being copied', inject(function($rootScope) {
-      expect(function() { copy($rootScope.$new()); }).
-          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
-      expect(function() { copy({child: $rootScope.$new()}, {}); }).
-          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
-      expect(function() { copy([$rootScope.$new()]); }).
-          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
-    }));
-
     it('should throw an exception if a Window is being copied', function() {
       expect(function() { copy(window); }).
           toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
@@ -666,17 +658,6 @@ describe('angular', function() {
 
       expect(dst.date).toBe(src.date);
     });
-
-    it('should copy elements by reference', function() {
-      var src = { element: document.createElement('div'),
-        jqObject: jqLite('<p><span>s1</span><span>s2</span></p>').find('span') };
-      var dst = {};
-
-      extend(dst, src);
-
-      expect(dst.element).toBe(src.element);
-      expect(dst.jqObject).toBe(src.jqObject);
-    });
   });
 
 
@@ -767,25 +748,6 @@ describe('angular', function() {
       expect(isRegExp(dst.regexp)).toBe(true);
       expect(dst.regexp.toString()).toBe(src.regexp.toString());
     });
-
-
-    it('should copy(clone) elements', function() {
-      var src = {
-        element: document.createElement('div'),
-        jqObject: jqLite('<p><span>s1</span><span>s2</span></p>').find('span')
-      };
-      var dst = {};
-
-      merge(dst, src);
-
-      expect(dst.element).not.toBe(src.element);
-      expect(dst.jqObject).not.toBe(src.jqObject);
-
-      expect(isElement(dst.element)).toBeTruthy();
-      expect(dst.element.nodeName).toBeDefined(); // i.e it is a DOM element
-      expect(isElement(dst.jqObject)).toBeTruthy();
-      expect(dst.jqObject.nodeName).toBeUndefined(); // i.e it is a jqLite/jQuery object
-    });
   });
 
 
@@ -831,13 +793,6 @@ describe('angular', function() {
       expect(shallowCopy('test')).toBe('test');
       expect(shallowCopy(3)).toBe(3);
       expect(shallowCopy(true)).toBe(true);
-    });
-  });
-
-  describe('elementHTML', function() {
-    it('should dump element', function() {
-      expect(startingTag('<div attr="123">something<span></span></div>')).
-        toEqual('<div attr="123">');
     });
   });
 
@@ -904,16 +859,6 @@ describe('angular', function() {
     it('should treat two NaNs as equal', function() {
       expect(equals(NaN, NaN)).toBe(true);
     });
-
-    it('should compare Scope instances only by identity', inject(function($rootScope) {
-      var scope1 = $rootScope.$new(),
-          scope2 = $rootScope.$new();
-
-      expect(equals(scope1, scope1)).toBe(true);
-      expect(equals(scope1, scope2)).toBe(false);
-      expect(equals($rootScope, scope1)).toBe(false);
-      expect(equals(undefined, scope1)).toBe(false);
-    }));
 
     it('should compare Window instances only by identity', function() {
       expect(equals(window, window)).toBe(true);
@@ -996,171 +941,6 @@ describe('angular', function() {
       expect(equals(o1, o2)).toBe(false);
     });
   });
-
-
-  describe('csp', function() {
-
-    function mockCspElement(cspAttrName, cspAttrValue) {
-      return spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[' + cspAttrName + ']') {
-          var html = '<div ' + cspAttrName + (cspAttrValue ? ('="' + cspAttrValue + '" ') : '') + '></div>';
-          return jqLite(html)[0];
-        }
-      });
-
-    }
-
-    var originalFunction;
-
-    beforeEach(function() {
-      spyOn(window, 'Function');
-    });
-
-    afterEach(function() {
-      delete csp.rules;
-    });
-
-
-    it('should return the false for all rules when CSP is not enabled (the default)', function() {
-      expect(csp()).toEqual({ noUnsafeEval: false, noInlineStyle: false });
-    });
-
-
-    it('should return true for noUnsafeEval if eval causes a CSP security policy error', function() {
-      window.Function.and.callFake(function() { throw new Error('CSP test'); });
-      expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: false });
-      expect(window.Function).toHaveBeenCalledWith('');
-    });
-
-
-    it('should return true for all rules when CSP is enabled manually via empty `ng-csp` attribute', function() {
-      var spy = mockCspElement('ng-csp');
-      expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: true });
-      expect(spy).toHaveBeenCalledWith('[ng-csp]');
-      expect(window.Function).not.toHaveBeenCalled();
-    });
-
-
-    it('should return true when CSP is enabled manually via [data-ng-csp]', function() {
-      var spy = mockCspElement('data-ng-csp');
-      expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: true });
-      expect(spy).toHaveBeenCalledWith('[data-ng-csp]');
-      expect(window.Function).not.toHaveBeenCalled();
-    });
-
-
-    it('should return true for noUnsafeEval if it is specified in the `ng-csp` attribute value', function() {
-      var spy = mockCspElement('ng-csp', 'no-unsafe-eval');
-      expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: false });
-      expect(spy).toHaveBeenCalledWith('[ng-csp]');
-      expect(window.Function).not.toHaveBeenCalled();
-    });
-
-
-    it('should return true for noInlineStyle if it is specified in the `ng-csp` attribute value', function() {
-      var spy = mockCspElement('ng-csp', 'no-inline-style');
-      expect(csp()).toEqual({ noUnsafeEval: false, noInlineStyle: true });
-      expect(spy).toHaveBeenCalledWith('[ng-csp]');
-      expect(window.Function).not.toHaveBeenCalled();
-    });
-
-
-    it('should return true for all styles if they are all specified in the `ng-csp` attribute value', function() {
-      var spy = mockCspElement('ng-csp', 'no-inline-style;no-unsafe-eval');
-      expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: true });
-      expect(spy).toHaveBeenCalledWith('[ng-csp]');
-      expect(window.Function).not.toHaveBeenCalled();
-    });
-  });
-
-
-  describe('jq', function() {
-    var element;
-
-    beforeEach(function() {
-      element = document.createElement('html');
-    });
-
-    afterEach(function() {
-      delete jq.name_;
-    });
-
-    it('should return undefined when jq is not set, no jQuery found (the default)', function() {
-      expect(jq()).toBeUndefined();
-    });
-
-    it('should return empty string when jq is enabled manually via [ng-jq] with empty string', function() {
-      element.setAttribute('ng-jq', '');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[ng-jq]') return element;
-      });
-      expect(jq()).toBe('');
-    });
-
-    it('should return empty string when jq is enabled manually via [data-ng-jq] with empty string', function() {
-      element.setAttribute('data-ng-jq', '');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[data-ng-jq]') return element;
-      });
-      expect(jq()).toBe('');
-      expect(document.querySelector).toHaveBeenCalledWith('[data-ng-jq]');
-    });
-
-    it('should return empty string when jq is enabled manually via [x-ng-jq] with empty string', function() {
-      element.setAttribute('x-ng-jq', '');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[x-ng-jq]') return element;
-      });
-      expect(jq()).toBe('');
-      expect(document.querySelector).toHaveBeenCalledWith('[x-ng-jq]');
-    });
-
-    it('should return empty string when jq is enabled manually via [ng:jq] with empty string', function() {
-      element.setAttribute('ng:jq', '');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[ng\\:jq]') return element;
-      });
-      expect(jq()).toBe('');
-      expect(document.querySelector).toHaveBeenCalledWith('[ng\\:jq]');
-    });
-
-    it('should return "jQuery" when jq is enabled manually via [ng-jq] with value "jQuery"', function() {
-      element.setAttribute('ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[ng-jq]') return element;
-      });
-      expect(jq()).toBe('jQuery');
-      expect(document.querySelector).toHaveBeenCalledWith('[ng-jq]');
-    });
-
-    it('should return "jQuery" when jq is enabled manually via [data-ng-jq] with value "jQuery"', function() {
-      element.setAttribute('data-ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[data-ng-jq]') return element;
-      });
-      expect(jq()).toBe('jQuery');
-      expect(document.querySelector).toHaveBeenCalledWith('[data-ng-jq]');
-    });
-
-    it('should return "jQuery" when jq is enabled manually via [x-ng-jq] with value "jQuery"', function() {
-      element.setAttribute('x-ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[x-ng-jq]') return element;
-      });
-      expect(jq()).toBe('jQuery');
-      expect(document.querySelector).toHaveBeenCalledWith('[x-ng-jq]');
-    });
-
-    it('should return "jQuery" when jq is enabled manually via [ng:jq] with value "jQuery"', function() {
-      element.setAttribute('ng:jq', 'jQuery');
-      spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector === '[ng\\:jq]') return element;
-      });
-      expect(jq()).toBe('jQuery');
-      expect(document.querySelector).toHaveBeenCalledWith('[ng\\:jq]');
-    });
-  });
-
 
   describe('parseKeyValue', function() {
     it('should parse a string into key-value pairs', function() {
@@ -1313,32 +1093,6 @@ describe('angular', function() {
       expect(log).toEqual(['0:1', '1:2']);
     });
 
-
-
-    it('should handle JQLite and jQuery objects like arrays', function() {
-      var jqObject = jqLite('<p><span>s1</span><span>s2</span></p>').find('span'),
-          log = [];
-
-      forEach(jqObject, function(value, key) { log.push(key + ':' + value.innerHTML); });
-      expect(log).toEqual(['0:s1', '1:s2']);
-
-      log = [];
-      jqObject = jqLite('<pane></pane>');
-      forEach(jqObject.children(), function(value, key) { log.push(key + ':' + value.innerHTML); });
-      expect(log).toEqual([]);
-    });
-
-
-    it('should handle NodeList objects like arrays', function() {
-      var nodeList = jqLite('<p><span>a</span><span>b</span><span>c</span></p>')[0].childNodes,
-          log = [];
-
-
-      forEach(nodeList, function(value, key) { log.push(key + ':' + value.innerHTML); });
-      expect(log).toEqual(['0:a', '1:b', '2:c']);
-    });
-
-
     it('should handle HTMLCollection objects like arrays', function() {
       document.body.innerHTML = '<p>' +
                                   '<a name=\'x\'>a</a>' +
@@ -1477,26 +1231,6 @@ describe('angular', function() {
       });
 
 
-      it('should follow the ES spec when called with jQuery/jqLite', function() {
-        testForEachSpec(2, jqLite('<span>a</span><span>b</span>'));
-      });
-
-
-      it('should follow the ES spec when called with childNodes NodeList', function() {
-        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].childNodes);
-      });
-
-
-      it('should follow the ES spec when called with getElementsByTagName HTMLCollection', function() {
-        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].getElementsByTagName('*'));
-      });
-
-
-      it('should follow the ES spec when called with querySelectorAll HTMLCollection', function() {
-        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].querySelectorAll('*'));
-      });
-
-
       it('should follow the ES spec when called with JSON', function() {
         testForEachSpec(2, {a: 1, b: 2});
       });
@@ -1599,90 +1333,6 @@ describe('angular', function() {
       expect(bootstrapSpy).not.toHaveBeenCalled();
     });
 
-
-    it('should look for ngApp directive as attr', function() {
-      var appElement = jqLite('<div ng-app="ABC"></div>')[0];
-      element.querySelector['[ng-app]'] = appElement;
-      angularInit(element, bootstrapSpy);
-      expect(bootstrapSpy).toHaveBeenCalledOnceWith(appElement, ['ABC'], jasmine.any(Object));
-    });
-
-
-    it('should look for ngApp directive using querySelectorAll', function() {
-      var appElement = jqLite('<div x-ng-app="ABC"></div>')[0];
-      element.querySelector['[x-ng-app]'] = appElement;
-      angularInit(element, bootstrapSpy);
-      expect(bootstrapSpy).toHaveBeenCalledOnceWith(appElement, ['ABC'], jasmine.any(Object));
-    });
-
-
-    it('should bootstrap anonymously', function() {
-      var appElement = jqLite('<div x-ng-app></div>')[0];
-      element.querySelector['[x-ng-app]'] = appElement;
-      angularInit(element, bootstrapSpy);
-      expect(bootstrapSpy).toHaveBeenCalledOnceWith(appElement, [], jasmine.any(Object));
-    });
-
-
-    it('should bootstrap if the annotation is on the root element', function() {
-      var appElement = jqLite('<div ng-app=""></div>')[0];
-      angularInit(appElement, bootstrapSpy);
-      expect(bootstrapSpy).toHaveBeenCalledOnceWith(appElement, [], jasmine.any(Object));
-    });
-
-
-    it('should complain if app module cannot be found', function() {
-      var appElement = jqLite('<div ng-app="doesntexist"></div>')[0];
-
-      expect(function() {
-        angularInit(appElement, angular.bootstrap);
-      }).toThrowMinErr('$injector', 'modulerr',
-        new RegExp('Failed to instantiate module doesntexist due to:\\n' +
-                   '.*\\[\\$injector:nomod] Module \'doesntexist\' is not available! You either ' +
-                   'misspelled the module name or forgot to load it\\.')
-      );
-    });
-
-
-    it('should complain if an element has already been bootstrapped', function() {
-      var element = jqLite('<div>bootstrap me!</div>');
-      angular.bootstrap(element);
-
-      expect(function() {
-        angular.bootstrap(element);
-      }).toThrowMinErr('ng', 'btstrpd',
-          /App Already Bootstrapped with this Element '&lt;div class="?ng-scope"?( ng\d+="?\d+"?)?&gt;'/i);
-
-      dealoc(element);
-    });
-
-
-    it('should complain if manually bootstrapping a document whose <html> element has already been bootstrapped', function() {
-      angular.bootstrap(document.getElementsByTagName('html')[0]);
-      expect(function() {
-        angular.bootstrap(document);
-      }).toThrowMinErr('ng', 'btstrpd', /App Already Bootstrapped with this Element 'document'/i);
-
-      dealoc(document);
-    });
-
-
-    it('should bootstrap in strict mode when ng-strict-di attribute is specified', function() {
-      bootstrapSpy = spyOn(angular, 'bootstrap').and.callThrough();
-      var appElement = jqLite('<div ng-app="" ng-strict-di></div>');
-      angularInit(jqLite('<div></div>').append(appElement[0])[0], bootstrapSpy);
-      expect(bootstrapSpy).toHaveBeenCalledOnce();
-      expect(bootstrapSpy.calls.mostRecent().args[2].strictDi).toBe(true);
-
-      var injector = appElement.injector();
-      function testFactory($rootScope) {}
-      expect(function() {
-        injector.instantiate(testFactory);
-      }).toThrowMinErr('$injector', 'strictdi');
-
-      dealoc(appElement);
-    });
-
     it('should bootstrap from an extension into an extension document for same-origin documents only', function() {
       if (msie) return;  // IE does not support document.currentScript (nor extensions with protocol), so skip test.
 
@@ -1729,13 +1379,6 @@ describe('angular', function() {
 
       src = 'file://whatever';
       expect(allowAutoBootstrap(fakeDoc)).toBe(true);
-    });
-
-    it('should not bootstrap if bootstrapping is disabled', function() {
-      isAutoBootstrapAllowed = false;
-      angularInit(jqLite('<div ng-app></div>')[0], bootstrapSpy);
-      expect(bootstrapSpy).not.toHaveBeenCalled();
-      isAutoBootstrapAllowed = true;
     });
   });
 
@@ -1806,75 +1449,6 @@ describe('angular', function() {
     });
   });
 
-
-  describe('compile', function() {
-    it('should link to existing node and create scope', inject(function($rootScope, $compile) {
-      var template = angular.element('<div>{{greeting = "hello world"}}</div>');
-      element = $compile(template)($rootScope);
-      $rootScope.$digest();
-      expect(template.text()).toEqual('hello world');
-      expect($rootScope.greeting).toEqual('hello world');
-    }));
-
-    it('should link to existing node and given scope', inject(function($rootScope, $compile) {
-      var template = angular.element('<div>{{greeting = "hello world"}}</div>');
-      element = $compile(template)($rootScope);
-      $rootScope.$digest();
-      expect(template.text()).toEqual('hello world');
-    }));
-
-    it('should link to new node and given scope', inject(function($rootScope, $compile) {
-      var template = jqLite('<div>{{greeting = "hello world"}}</div>');
-
-      var compile = $compile(template);
-      var templateClone = template.clone();
-
-      element = compile($rootScope, function(clone) {
-        templateClone = clone;
-      });
-      $rootScope.$digest();
-
-      expect(template.text()).toEqual('{{greeting = "hello world"}}');
-      expect(element.text()).toEqual('hello world');
-      expect(element).toEqual(templateClone);
-      expect($rootScope.greeting).toEqual('hello world');
-    }));
-
-    it('should link to cloned node and create scope', inject(function($rootScope, $compile) {
-      var template = jqLite('<div>{{greeting = "hello world"}}</div>');
-      element = $compile(template)($rootScope, noop);
-      $rootScope.$digest();
-      expect(template.text()).toEqual('{{greeting = "hello world"}}');
-      expect(element.text()).toEqual('hello world');
-      expect($rootScope.greeting).toEqual('hello world');
-    }));
-  });
-
-
-  describe('nodeName_', function() {
-    it('should correctly detect node name with "namespace" when xmlns is defined', function() {
-      var div = jqLite('<div xmlns:ngtest="http://angularjs.org/">' +
-                         '<ngtest:foo ngtest:attr="bar"></ngtest:foo>' +
-                       '</div>')[0];
-      expect(nodeName_(div.childNodes[0])).toBe('ngtest:foo');
-      expect(div.childNodes[0].getAttribute('ngtest:attr')).toBe('bar');
-    });
-
-    it('should correctly detect node name with "namespace" when xmlns is NOT defined', function() {
-      var div = jqLite('<div xmlns:ngtest="http://angularjs.org/">' +
-                         '<ngtest:foo ngtest:attr="bar"></ng-test>' +
-                       '</div>')[0];
-      expect(nodeName_(div.childNodes[0])).toBe('ngtest:foo');
-      expect(div.childNodes[0].getAttribute('ngtest:attr')).toBe('bar');
-    });
-
-    it('should return undefined for elements without the .nodeName property', function() {
-      //some elements, like SVGElementInstance don't have .nodeName property
-      expect(nodeName_({})).toBeUndefined();
-    });
-  });
-
-
   describe('nextUid()', function() {
     it('should return new id per call', function() {
       var seen = {};
@@ -1898,137 +1472,6 @@ describe('angular', function() {
       expect(version.minor).toBe('NG_VERSION_MINOR');
       expect(version.dot).toBe('NG_VERSION_DOT');
       expect(version.codeName).toBe('"NG_VERSION_CODENAME"');
-    });
-  });
-
-  describe('bootstrap', function() {
-    it('should bootstrap app', function() {
-      var element = jqLite('<div>{{1+2}}</div>');
-      var injector = angular.bootstrap(element);
-      expect(injector).toBeDefined();
-      expect(element.injector()).toBe(injector);
-      dealoc(element);
-    });
-
-    it('should complain if app module can\'t be found', function() {
-      var element = jqLite('<div>{{1+2}}</div>');
-
-      expect(function() {
-        angular.bootstrap(element, ['doesntexist']);
-      }).toThrowMinErr('$injector', 'modulerr',
-          new RegExp('Failed to instantiate module doesntexist due to:\\n' +
-                     '.*\\[\\$injector:nomod\\] Module \'doesntexist\' is not available! You either ' +
-                     'misspelled the module name or forgot to load it\\.'));
-
-      expect(element.html()).toBe('{{1+2}}');
-      dealoc(element);
-    });
-
-
-    describe('deferred bootstrap', function() {
-      var originalName = window.name,
-          element;
-
-      beforeEach(function() {
-        window.name = '';
-        element = jqLite('<div>{{1+2}}</div>');
-      });
-
-      afterEach(function() {
-        dealoc(element);
-        window.name = originalName;
-      });
-
-      it('should provide injector for deferred bootstrap', function() {
-        var injector;
-        window.name = 'NG_DEFER_BOOTSTRAP!';
-
-        injector = angular.bootstrap(element);
-        expect(injector).toBeUndefined();
-
-        injector = angular.resumeBootstrap();
-        expect(injector).toBeDefined();
-      });
-
-      it('should resume deferred bootstrap, if defined', function() {
-        var injector;
-        window.name = 'NG_DEFER_BOOTSTRAP!';
-
-        angular.resumeDeferredBootstrap = noop;
-        var spy = spyOn(angular, 'resumeDeferredBootstrap');
-        injector = angular.bootstrap(element);
-        expect(spy).toHaveBeenCalled();
-      });
-
-      it('should wait for extra modules', function() {
-        window.name = 'NG_DEFER_BOOTSTRAP!';
-        angular.bootstrap(element);
-
-        expect(element.html()).toBe('{{1+2}}');
-
-        angular.resumeBootstrap();
-
-        expect(element.html()).toBe('3');
-        expect(window.name).toEqual('');
-      });
-
-
-      it('should load extra modules', function() {
-        element = jqLite('<div>{{1+2}}</div>');
-        window.name = 'NG_DEFER_BOOTSTRAP!';
-
-        var bootstrapping = jasmine.createSpy('bootstrapping');
-        angular.bootstrap(element, [bootstrapping]);
-
-        expect(bootstrapping).not.toHaveBeenCalled();
-        expect(element.injector()).toBeUndefined();
-
-        angular.module('addedModule', []).value('foo', 'bar');
-        angular.resumeBootstrap(['addedModule']);
-
-        expect(bootstrapping).toHaveBeenCalledOnce();
-        expect(element.injector().get('foo')).toEqual('bar');
-      });
-
-
-      it('should not defer bootstrap without window.name cue', function() {
-        angular.bootstrap(element, []);
-        angular.module('addedModule', []).value('foo', 'bar');
-
-        expect(function() {
-          element.injector().get('foo');
-        }).toThrowMinErr('$injector', 'unpr', 'Unknown provider: fooProvider <- foo');
-
-        expect(element.injector().get('$http')).toBeDefined();
-      });
-
-
-      it('should restore the original window.name after bootstrap', function() {
-        window.name = 'NG_DEFER_BOOTSTRAP!my custom name';
-        angular.bootstrap(element);
-
-        expect(element.html()).toBe('{{1+2}}');
-
-        angular.resumeBootstrap();
-
-        expect(element.html()).toBe('3');
-        expect(window.name).toEqual('my custom name');
-      });
-    });
-  });
-
-
-  describe('startingElementHtml', function() {
-    it('should show starting element tag only', function() {
-      expect(startingTag('<ng-abc x="2A"><div>text</div></ng-abc>')).
-          toBe('<ng-abc x="2A">');
-    });
-  });
-
-  describe('startingTag', function() {
-    it('should allow passing in Nodes instead of Elements', function() {
-      var txtNode = document.createTextNode('some text');
-      expect(startingTag(txtNode)).toBe('some text');
     });
   });
 
@@ -2102,47 +1545,8 @@ describe('angular', function() {
       expect(toJson(document)).toEqual('"$DOCUMENT"');
     });
 
-
-    it('should not serialize scope instances', inject(function($rootScope) {
-      expect(toJson({key: $rootScope})).toEqual('{"key":"$SCOPE"}');
-    }));
-
     it('should serialize undefined as undefined', function() {
       expect(toJson(undefined)).toEqual(undefined);
-    });
-  });
-
-  describe('isElement', function() {
-    it('should return a boolean value', inject(function($compile, $document, $rootScope) {
-      var element = $compile('<p>Hello, world!</p>')($rootScope),
-          body = $document.find('body')[0],
-          expected = [false, false, false, false, false, false, false, true, true],
-          tests = [null, undefined, 'string', 1001, {}, 0, false, body, element];
-      angular.forEach(tests, function(value, idx) {
-        var result = angular.isElement(value);
-        expect(typeof result).toEqual('boolean');
-        expect(result).toEqual(expected[idx]);
-      });
-    }));
-
-    // Issue #4805
-    it('should return false for objects resembling a Backbone Collection', function() {
-      // Backbone stuff is sort of hard to mock, if you have a better way of doing this,
-      // please fix this.
-      var fakeBackboneCollection = {
-        children: [{}, {}, {}],
-        find: function() {},
-        on: function() {},
-        off: function() {},
-        bind: function() {}
-      };
-      expect(isElement(fakeBackboneCollection)).toBe(false);
-    });
-
-    it('should return false for arrays with node-like properties', function() {
-      var array = [1,2,3];
-      array.on = true;
-      expect(isElement(array)).toBe(false);
     });
   });
 });

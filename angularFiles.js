@@ -27,18 +27,6 @@ var angularFiles = {
 
   'karmaExclude': [
     'src/angular-bootstrap.js'
-  ],
-
-  'karmaModules': [
-    'build/angular.js',
-    'test/modules/no_bootstrap.js',
-    'test/helpers/*.js'
-  ],
-
-  'karmaJqueryExclude': [
-    'src/angular-bootstrap.js',
-    'src/ngScenario/angular-bootstrap.js',
-    'src/angular.bind.js'
   ]
 };
 

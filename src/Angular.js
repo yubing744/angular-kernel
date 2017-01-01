@@ -4,8 +4,6 @@
 /* exported
   angular,
   msie,
-  jqLite,
-  jQuery,
   slice,
   splice,
   push,
@@ -60,8 +58,6 @@
   arrayRemove,
   copy,
   equals,
-  csp,
-  jq,
   concat,
   sliceArgs,
   bind,
@@ -80,12 +76,10 @@
   bootstrap,
   getTestability,
   snake_case,
-  bindJQuery,
   assertArg,
   assertArgFn,
   assertNotHasOwnProperty,
   getter,
-  getBlockNodes,
   hasOwnProperty,
   createMap,
   stringify,
@@ -187,8 +181,6 @@ if ('i' !== 'I'.toLowerCase()) {
 
 var
     msie,             // holds major version number for IE, or NaN if UA is not IE.
-    jqLite,           // delay binding since jQuery could be loaded after us.
-    jQuery,           // delay binding
     slice             = [].slice,
     splice            = [].splice,
     push              = [].push,
@@ -220,11 +212,8 @@ function isArrayLike(obj) {
   // `null`, `undefined` and `window` are not array-like
   if (obj == null || isWindow(obj)) return false;
 
-  // arrays, strings and jQuery/jqLite objects are array like
-  // * jqLite is either the jQuery or jqLite constructor function
-  // * we have to check the existence of jqLite first as this method is called
-  //   via the forEach method when constructing the jqLite object in the first place
-  if (isArray(obj) || isString(obj) || (jqLite && obj instanceof jqLite)) return true;
+  // arrays, strings and are array like
+  if (isArray(obj) || isString(obj)) return true;
 
   // Support: iOS 8.2 (not reproducible in simulator)
   // "length" in obj used to prevent JIT error (gh-11508)
@@ -1093,95 +1082,6 @@ function equals(o1, o2) {
   return false;
 }
 
-var csp = function() {
-  if (!isDefined(csp.rules)) {
-
-
-    var ngCspElement = (window.document.querySelector('[ng-csp]') ||
-                    window.document.querySelector('[data-ng-csp]'));
-
-    if (ngCspElement) {
-      var ngCspAttribute = ngCspElement.getAttribute('ng-csp') ||
-                    ngCspElement.getAttribute('data-ng-csp');
-      csp.rules = {
-        noUnsafeEval: !ngCspAttribute || (ngCspAttribute.indexOf('no-unsafe-eval') !== -1),
-        noInlineStyle: !ngCspAttribute || (ngCspAttribute.indexOf('no-inline-style') !== -1)
-      };
-    } else {
-      csp.rules = {
-        noUnsafeEval: noUnsafeEval(),
-        noInlineStyle: false
-      };
-    }
-  }
-
-  return csp.rules;
-
-  function noUnsafeEval() {
-    try {
-      // eslint-disable-next-line no-new, no-new-func
-      new Function('');
-      return false;
-    } catch (e) {
-      return true;
-    }
-  }
-};
-
-/**
- * @ngdoc directive
- * @module ng
- * @name ngJq
- *
- * @element ANY
- * @param {string=} ngJq the name of the library available under `window`
- * to be used for angular.element
- * @description
- * Use this directive to force the angular.element library.  This should be
- * used to force either jqLite by leaving ng-jq blank or setting the name of
- * the jquery variable under window (eg. jQuery).
- *
- * Since angular looks for this directive when it is loaded (doesn't wait for the
- * DOMContentLoaded event), it must be placed on an element that comes before the script
- * which loads angular. Also, only the first instance of `ng-jq` will be used and all
- * others ignored.
- *
- * @example
- * This example shows how to force jqLite using the `ngJq` directive to the `html` tag.
- ```html
- <!doctype html>
- <html ng-app ng-jq>
- ...
- ...
- </html>
- ```
- * @example
- * This example shows how to use a jQuery based library of a different name.
- * The library name must be available at the top most 'window'.
- ```html
- <!doctype html>
- <html ng-app ng-jq="jQueryLib">
- ...
- ...
- </html>
- ```
- */
-var jq = function() {
-  if (isDefined(jq.name_)) return jq.name_;
-  var el;
-  var i, ii = ngAttrPrefixes.length, prefix, name;
-  for (i = 0; i < ii; ++i) {
-    prefix = ngAttrPrefixes[i];
-    el = window.document.querySelector('[' + prefix.replace(':', '\\:') + 'jq]');
-    if (el) {
-      name = el.getAttribute(prefix + 'jq');
-      break;
-    }
-  }
-
-  return (jq.name_ = name);
-};
-
 function concat(array1, array2, index) {
   return array1.concat(slice.call(array2, index));
 }
@@ -1333,30 +1233,6 @@ function convertTimezoneToLocal(date, timezone, reverse) {
   var timezoneOffset = timezoneToOffset(timezone, dateTimezoneOffset);
   return addDateMinutes(date, reverse * (timezoneOffset - dateTimezoneOffset));
 }
-
-
-/**
- * @returns {string} Returns the string representation of the element.
- */
-function startingTag(element) {
-  element = jqLite(element).clone();
-  try {
-    // turns out IE does not let you set .html() on elements which
-    // are not allowed to have children. So we just ignore it.
-    element.empty();
-  } catch (e) { /* empty */ }
-  var elemHtml = jqLite('<div>').append(element).html();
-  try {
-    return element[0].nodeType === NODE_TYPE_TEXT ? lowercase(elemHtml) :
-        elemHtml.
-          match(/^(<[^>]+>)/)[1].
-          replace(/^<([\w-]+)/, function(match, nodeName) {return '<' + lowercase(nodeName);});
-  } catch (e) {
-    return lowercase(elemHtml);
-  }
-
-}
-
 
 /////////////////////////////////////////////////
 
@@ -1742,21 +1618,8 @@ function bootstrap(element, modules, config) {
   };
   config = extend(defaultConfig, config);
   var doBootstrap = function() {
-    element = jqLite(element);
-
-    if (element.injector()) {
-      var tag = (element[0] === window.document) ? 'document' : startingTag(element);
-      // Encode angle brackets to prevent input from being sanitized to empty string #8683.
-      throw ngMinErr(
-          'btstrpd',
-          'App already bootstrapped with this element \'{0}\'',
-          tag.replace(/</,'&lt;').replace(/>/,'&gt;'));
-    }
 
     modules = modules || [];
-    modules.unshift(['$provide', function($provide) {
-      $provide.value('$rootElement', element);
-    }]);
 
     if (config.debugInfoEnabled) {
       // Pushing so that this overrides `debugInfoEnabled` setting defined in user's `modules`.
@@ -1843,58 +1706,6 @@ function snake_case(name, separator) {
   });
 }
 
-var bindJQueryFired = false;
-function bindJQuery() {
-  var originalCleanData;
-
-  if (bindJQueryFired) {
-    return;
-  }
-
-  // bind to jQuery if present;
-  var jqName = jq();
-  jQuery = isUndefined(jqName) ? window.jQuery :   // use jQuery (if present)
-           !jqName             ? undefined     :   // use jqLite
-                                 window[jqName];   // use jQuery specified by `ngJq`
-
-  // Use jQuery if it exists with proper functionality, otherwise default to us.
-  // Angular 1.2+ requires jQuery 1.7+ for on()/off() support.
-  // Angular 1.3+ technically requires at least jQuery 2.1+ but it may work with older
-  // versions. It will not work for sure with jQuery <1.7, though.
-  if (jQuery && jQuery.fn.on) {
-    jqLite = jQuery;
-    extend(jQuery.fn, {
-      scope: JQLitePrototype.scope,
-      isolateScope: JQLitePrototype.isolateScope,
-      controller: JQLitePrototype.controller,
-      injector: JQLitePrototype.injector,
-      inheritedData: JQLitePrototype.inheritedData
-    });
-
-    // All nodes removed from the DOM via various jQuery APIs like .remove()
-    // are passed through jQuery.cleanData. Monkey-patch this method to fire
-    // the $destroy event on all removed nodes.
-    originalCleanData = jQuery.cleanData;
-    jQuery.cleanData = function(elems) {
-      var events;
-      for (var i = 0, elem; (elem = elems[i]) != null; i++) {
-        events = jQuery._data(elem, 'events');
-        if (events && events.$destroy) {
-          jQuery(elem).triggerHandler('$destroy');
-        }
-      }
-      originalCleanData(elems);
-    };
-  } else {
-    jqLite = JQLite;
-  }
-
-  angular.element = jqLite;
-
-  // Prevent double-proxying.
-  bindJQueryFired = true;
-}
-
 /**
  * throw error if the argument is falsy.
  */
@@ -1952,30 +1763,6 @@ function getter(obj, path, bindFnToScope) {
   }
   return obj;
 }
-
-/**
- * Return the DOM siblings between the first and last node in the given array.
- * @param {Array} array like object
- * @returns {Array} the inputted object or a jqLite collection containing the nodes
- */
-function getBlockNodes(nodes) {
-  // TODO(perf): update `nodes` instead of creating a new object?
-  var node = nodes[0];
-  var endNode = nodes[nodes.length - 1];
-  var blockNodes;
-
-  for (var i = 1; node !== endNode && (node = node.nextSibling); i++) {
-    if (blockNodes || nodes[i] !== node) {
-      if (!blockNodes) {
-        blockNodes = jqLite(slice.call(nodes, 0, i));
-      }
-      blockNodes.push(node);
-    }
-  }
-
-  return blockNodes || nodes;
-}
-
 
 /**
  * Creates a new object without a prototype. This object is useful for lookup without having to

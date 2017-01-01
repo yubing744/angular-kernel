@@ -1,12 +1,12 @@
 {
   "name": "angularjs",
   "license": "MIT",
-  "branchVersion": "^1.6.0",
-  "branchPattern": "1.6.*",
+  "branchVersion": "^1.0.0",
+  "branchPattern": "1.0.*",
   "distTag": "latest",
   "repository": {
     "type": "git",
-    "url": "https://github.com/angular/angular.js.git"
+    "url": "https://github.com/yubing744/angular-core.git"
   },
   "engines": {
     "node": "^6.9.1",
