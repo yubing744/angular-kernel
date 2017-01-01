@@ -65,6 +65,6 @@ function publishExternalAPI(angular) {
   });
 }
 
-angularModule = setupModuleLoader(window);
+angularModule = setupModuleLoader(angular);
 
 
