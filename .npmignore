@@ -40,3 +40,4 @@ bower.json
 TRIAGING.md
 CONTRIBUTING.md
 build/*.json
+Gruntfile.js
