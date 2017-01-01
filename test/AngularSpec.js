@@ -1305,84 +1305,6 @@ describe('angular', function() {
     });
   });
 
-
-  describe('angularInit', function() {
-    var bootstrapSpy;
-    var element;
-
-    beforeEach(function() {
-      element = {
-        hasAttribute: function(name) {
-          return !!element[name];
-        },
-
-        querySelector: function(arg) {
-          return element.querySelector[arg] || null;
-        },
-
-        getAttribute: function(name) {
-          return element[name];
-        }
-      };
-      bootstrapSpy = jasmine.createSpy('bootstrapSpy');
-    });
-
-
-    it('should do nothing when not found', function() {
-      angularInit(element, bootstrapSpy);
-      expect(bootstrapSpy).not.toHaveBeenCalled();
-    });
-
-    it('should bootstrap from an extension into an extension document for same-origin documents only', function() {
-      if (msie) return;  // IE does not support document.currentScript (nor extensions with protocol), so skip test.
-
-      // Extension URLs are browser-specific, so we must choose a scheme that is supported by the browser to make
-      // sure that the URL is properly parsed.
-      var extensionScheme;
-      var userAgent = window.navigator.userAgent;
-      if (/Firefox\//.test(userAgent)) {
-        extensionScheme = 'moz-extension';
-      } else if (/Edge\//.test(userAgent)) {
-        extensionScheme = 'ms-browser-extension';
-      } else if (/Chrome\//.test(userAgent)) {
-        extensionScheme = 'chrome-extension';
-      } else if (/Safari\//.test(userAgent)) {
-        extensionScheme = 'safari-extension';
-      } else {
-        extensionScheme = 'browserext';  // Upcoming standard scheme.
-      }
-
-      var src = extensionScheme + '://something';
-      // Fake a minimal document object (the actual document.currentScript is readonly).
-      var fakeDoc = {
-        currentScript: { getAttribute: function() { return src; } },
-        location: {protocol: extensionScheme + ':', origin: extensionScheme + '://something'},
-        createElement: document.createElement.bind(document)
-      };
-      expect(allowAutoBootstrap(fakeDoc)).toBe(true);
-
-      src = extensionScheme + '://something-else';
-      expect(allowAutoBootstrap(fakeDoc)).toBe(false);
-    });
-
-    it('should not bootstrap from an extension into a non-extension document', function() {
-      if (msie) return;  // IE does not support document.currentScript (nor extensions with protocol), so skip test.
-
-      var src = 'resource://something';
-      // Fake a minimal document object (the actual document.currentScript is readonly).
-      var fakeDoc = {
-        currentScript: { getAttribute: function() { return src; } },
-        location: {protocol: 'http:'},
-        createElement: document.createElement.bind(document)
-      };
-      expect(allowAutoBootstrap(fakeDoc)).toBe(false);
-
-      src = 'file://whatever';
-      expect(allowAutoBootstrap(fakeDoc)).toBe(true);
-    });
-  });
-
-
   describe('angular service', function() {
     it('should override services', function() {
       module(function($provide) {
@@ -1474,6 +1396,76 @@ describe('angular', function() {
       expect(version.codeName).toBe('"NG_VERSION_CODENAME"');
     });
   });
+
+  describe('bootstrap', function() {
+    it('should bootstrap app', function() {
+      var app = angular.module('demo', [])
+      .service('hello', function() {});
+
+      var injector = angular.bootstrap(["demo"]);
+      expect(injector).toBeDefined();
+    });
+
+    
+    it('should complain if app module can\'t be found', function() {
+      expect(function() {
+        angular.bootstrap(['doesntexist']);
+      }).toThrowMinErr('$injector', 'modulerr',
+          new RegExp('Failed to instantiate module doesntexist due to:\\n' +
+                     '.*\\[\\$injector:nomod\\] Module \'doesntexist\' is not available! You either ' +
+                     'misspelled the module name or forgot to load it\\.'));
+    });
+
+    describe('deferred bootstrap', function() {
+      var originalName = window.name;
+
+      beforeEach(function() {
+        window.name = '';
+      });
+
+      afterEach(function() {
+        window.name = originalName;
+      });
+
+      it('should provide injector for deferred bootstrap', function() {
+        var injector;
+        window.name = 'NG_DEFER_BOOTSTRAP!';
+
+        injector = angular.bootstrap();
+        expect(injector).toBeUndefined();
+
+        injector = angular.resumeBootstrap();
+        expect(injector).toBeDefined();
+      });
+
+      
+      it('should resume deferred bootstrap, if defined', function() {
+        var injector;
+        window.name = 'NG_DEFER_BOOTSTRAP!';
+
+        angular.resumeDeferredBootstrap = noop;
+        var spy = spyOn(angular, 'resumeDeferredBootstrap');
+        injector = angular.bootstrap(element);
+        expect(spy).toHaveBeenCalled();
+      });
+
+      
+      it('should load extra modules', function() {
+        window.name = 'NG_DEFER_BOOTSTRAP!';
+
+        var bootstrapping = jasmine.createSpy('bootstrapping');
+        angular.bootstrap([bootstrapping]);
+
+        expect(bootstrapping).not.toHaveBeenCalled();
+
+        angular.module('addedModule', []).value('foo', 'bar');
+        angular.resumeBootstrap(['addedModule']);
+
+        expect(bootstrapping).toHaveBeenCalledOnce();
+      });
+    });
+  });
+
 
   describe('snake_case', function() {
     it('should convert to snake_case', function() {

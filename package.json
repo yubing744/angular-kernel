@@ -1,12 +1,14 @@
 {
-  "name": "angularjs",
+  "name": "angular-kernel",
+  "version": "0.1.1",
   "license": "MIT",
-  "branchVersion": "^1.0.0",
-  "branchPattern": "1.0.*",
+  "branchVersion": "^0.1.1",
+  "branchPattern": "0.1.*",
   "distTag": "latest",
+  "main": "dist/angular-kernel.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yubing744/angular-core.git"
+    "url": "https://github.com/yubing744/angular-kernel.git"
   },
   "engines": {
     "node": "^6.9.1",

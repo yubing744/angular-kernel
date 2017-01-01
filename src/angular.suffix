@@ -1,3 +1,11 @@
-	angularInit(window.document, bootstrap);
+if (typeof define === 'function' && typeof define.amd === 'object' && define.amd) {
+    define(function() {
+        return angular;
+    });
+} else if (typeof module !== 'undefined' && module.exports) {
+    module.exports = angular;
+} else {
+    window.angular = angular;
+}
 
 })(window);

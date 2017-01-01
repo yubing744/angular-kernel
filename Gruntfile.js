@@ -61,7 +61,7 @@ module.exports = function(grunt) {
   // compute version related info for this build
   var NG_VERSION = versionInfo.currentVersion;
   NG_VERSION.cdn = versionInfo.cdnVersion;
-  var dist = 'angular-core-' + NG_VERSION.full;
+  var dist = 'angular-kernel-' + NG_VERSION.full;
 
   if (versionInfo.cdnVersion == null) {
     throw new Error('Unable to read CDN version, are you offline or has the CDN not been properly pushed?\n' +
@@ -173,14 +173,14 @@ module.exports = function(grunt) {
 
     build: {
       angular: {
-        dest: 'build/angular-core.js',
-        src: util.wrap([files['angularSrc']], 'angular-core')
+        dest: 'build/angular-kernel.js',
+        src: util.wrap([files['angularSrc']], 'angular')
       }
     },
 
 
     min: {
-      angular: 'build/angular-core.js'
+      angular: 'build/angular-kernel.js'
     },
 
     'ddescribe-iit': {
@@ -266,7 +266,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('minify', ['bower', 'clean', 'build', 'minall']);
   grunt.registerTask('webserver', ['connect:devserver']);
-  grunt.registerTask('package', ['bower', 'clean', 'buildall', 'minall', 'collect-errors', 'write', 'compress']);
+  grunt.registerTask('package', ['bower', 'clean', 'buildall', 'minall']);
   grunt.registerTask('ci-checks', ['ddescribe-iit', 'merge-conflict', 'eslint']);
   grunt.registerTask('default', ['package']);
 };
