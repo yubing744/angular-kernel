@@ -34,7 +34,6 @@ describe('module loader', function() {
       factory('fk', 'fv').
       service('a', 'aa').
       value('k', 'v').
-      filter('f', 'ff').
       config('init2').
       constant('abc', 123).
       run('runBlock')).toBe(myModule);
@@ -45,8 +44,7 @@ describe('module loader', function() {
       ['$provide', 'provider', jasmine.objectContaining(['sk', 'sv'])],
       ['$provide', 'factory', jasmine.objectContaining(['fk', 'fv'])],
       ['$provide', 'service', jasmine.objectContaining(['a', 'aa'])],
-      ['$provide', 'value', jasmine.objectContaining(['k', 'v'])],
-      ['$filterProvider', 'register', jasmine.objectContaining(['f', 'ff'])]
+      ['$provide', 'value', jasmine.objectContaining(['k', 'v'])]
     ]);
     expect(myModule._configBlocks).toEqual([
       ['$injector', 'invoke', jasmine.objectContaining(['config'])],
