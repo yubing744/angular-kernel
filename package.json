@@ -1,8 +1,8 @@
 {
   "name": "angular-kernel",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
-  "branchVersion": "^0.1.3",
+  "branchVersion": "^0.1.4",
   "branchPattern": "0.1.*",
   "distTag": "latest",
   "main": "build/angular-kernel.js",

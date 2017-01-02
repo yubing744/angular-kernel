@@ -1,3 +1,10 @@
 # The Kernal of AngularJs, include IOC and Module feature
 
-## from AngularJs 1.6.1
+## base AngularJs 1.6.1
+
+## exclude ng module
+
+## exclude jqLite
+
+## min compress file size 12Kb
+
