@@ -1,10 +1,19 @@
-# The Kernal of AngularJs, include IOC and Module feature
+# angular-kernel
 
-## base AngularJs 1.6.1
+## Intro
+The Kernel of AngularJs, include IOC and Module feature
 
-## exclude ng module
+ - base AngularJs 1.6.1
+ - exclude ng module
+ - exclude jqLite
+ - min compress file size 12Kb
 
-## exclude jqLite
+## Examples
+ - [angular-react-example](https://github.com/yubing744/angular-react-example)
+ - [angular-vue-example](https://github.com/yubing744/angular-vue-example)
 
-## min compress file size 12Kb
+## Changelog
+
+Details changes for each release are documented in the [release notes](https://github.com/yubing744/angular-kernel).
+
 
